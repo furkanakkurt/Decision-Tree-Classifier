@@ -10,7 +10,22 @@ using namespace std;
         isLeaf = true;
     }
 
-    DecisionTreeNode::~DecisionTreeNode() {}
+    DecisionTreeNode::DecisionTreeNode() {
+        feature = -1;
+        leftPtr = NULL;
+        rightPtr = NULL;
+        isLeaf = true;
+    }
+
+    DecisionTreeNode::~DecisionTreeNode() {
+        if ( rightPtr ) {
+            delete rightPtr;
+        }
+
+        if ( leftPtr ) {
+            delete leftPtr;
+        }
+    }
 
     void DecisionTreeNode::insertRightChild( int nFeature ) {
         DecisionTreeNode * right = new DecisionTreeNode(nFeature);
@@ -24,6 +39,10 @@ using namespace std;
         isLeaf = false;
     }
     
+    int DecisionTreeNode::getFeature() {
+        return feature;
+    }
+
     bool DecisionTreeNode::hasChildren() {
         if ( leftPtr != NULL || rightPtr != NULL ) {
             return true;

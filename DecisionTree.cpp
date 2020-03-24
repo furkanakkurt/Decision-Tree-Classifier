@@ -4,6 +4,10 @@
 
 using namespace std; 
 
+DecisionTree::~DecisionTree() {
+    delete root;
+}
+
 double DecisionTree::calculateEntropy( const int * classCounts, const int numClasses) {
     
     double entropy = 0;
