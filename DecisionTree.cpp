@@ -1,5 +1,8 @@
 #include "DecisionTree.h"
 #include <cmath>
+#include <iostream>
+
+using namespace std; 
 
 double DecisionTree::calculateEntropy( const int * classCounts, const int numClasses) {
     
@@ -32,23 +35,21 @@ double DecisionTree::calculateInformationGain(const bool** data, const int* labe
     //H(S) = P(left)*H(left) + P(right)*H(right)
     //P(left,right) = Prob of choosing left or right child
 
-    double entropyNode;     //H(P)
-    double entropySplit;    //H(S)
-
-    int usedDataCount = 0;
-    int classCount  = 0;
-    int innerArray = 0;
-
+    int classCount  = 0;    //We do need to find the class count for calculations         
     int sizeRight = 0;      //Size of classes array of right child
     int sizeLeft = 0;       //Size of classes array of left child
 
+    double entropyNode = 0;     //H(P)
+    double entropyLeft = 0;     //H(left)
+    double entropyRight = 0;    //H(right)
+    double probLeft = 0;        //P(left)
+    double probRight = 0;       //P(right)
+
     //In order to find the classCount
+    //We do also need to find whether the sample reach the node 
     for ( int i = 0; i < numSamples; i++ ) {
-        if ( usedSamples[i] ) {
-            usedDataCount++;
-            if ( labels[i] > classCount ) {
-                classCount = labels[i];
-            }
+        if ( labels[i] > classCount ) {
+            classCount = labels[i];
         }
     }
     
@@ -58,65 +59,34 @@ double DecisionTree::calculateInformationGain(const bool** data, const int* labe
     int leftClasses[classCount] = {0};
     int rightClasses[classCount] = {0};
 
-    //These arrays are created 
-    bool ** datasUsed = new bool*[usedDataCount];
-    int * labelsUsed = new int[usedDataCount];
-
-
-    //In order to fill in the two arrays created above
-    for ( int j = 0; j < numSamples; j++ ) {
-        if ( usedSamples[j] ) {
-            //creating the array 
-            datasUsed[innerArray] = new bool[numFeatures];
-            //initializing the array elements
-            for ( int k = 0; k < numFeatures; k++ ) {
-                datasUsed[innerArray][k] = data[j][k];
+    //In order to determine the number of samples of each class
+    for ( int i = 0; i < numSamples; i++ ) {
+        if ( !usedSamples[i] ) {
+            if ( data[i][featureId] == 1 ) {
+                rightClasses[labels[i]-1]++;
             }
-            labelsUsed[innerArray] = labels[j];
-            ++innerArray;
+            else {
+                leftClasses[labels[i]-1]++;
+            }
+            classes[labels[i]-1]++;
         }
     }
 
-    for ( int l = 0; l < usedDataCount; l++ ) {
-        for ( int m = 0; m < classCount; m++ ) {
-            if (labelsUsed[l] == m + 1 ) {
-                classes[m] += 1;
-            }
-        }
-
-        if (datasUsed[l][featureId] == 0 ) {
-            for ( int n = 0; n < classCount; n++ ) {
-                if (labelsUsed[l] == n + 1 ) {
-                    leftClasses[n] += 1;
-                }
-            }
-            ++sizeLeft;
-        }
-
-        else {
-            for ( int o = 0; o < classCount; o++ ) {
-               if ( labelsUsed[l] == o + 1 ) {
-                   rightClasses[o] += 1;
-               } 
-            }
-            ++sizeRight;
-        }
+    for ( int i = 0; i < classCount; i++ ) {
+        sizeLeft += leftClasses[i];
+        sizeRight += rightClasses[i];
     }
 
-    for ( int p = 0; p < usedDataCount; p++ ) {
-        delete [] datasUsed[p];
-    }
+    //cout << sizeLeft << "\t" << sizeRight << endl;
+    entropyNode = calculateEntropy(classes, classCount);             //H(P)
+    entropyLeft = calculateEntropy(leftClasses, classCount);        //H(left)
+    entropyRight = calculateEntropy(rightClasses, classCount);        //H(right)
 
-    delete [] datasUsed;
-    delete [] labelsUsed;
+    probLeft = double( sizeLeft ) / numSamples;     //P(left)
+    probRight = double( sizeRight ) / numSamples;   //P(right)
 
-    entropyNode = calculateEntropy(classes, classCount);
-    double entropyLeft = calculateEntropy(rightClasses, classCount);    //H(left)
-    double entropyRight = calculateEntropy(leftClasses, classCount);    //H(right)
+    double entropySplit = probLeft * entropyLeft + probRight * entropyRight;    //H(S)
+    double infoGain = entropyNode - entropySplit;                               //H(P) - H(S)
 
-    double probLeft = sizeLeft / usedDataCount;     //P(left)
-    double probRight = sizeRight / usedDataCount;   //P(right) 
-
-    entropySplit = probLeft * entropyLeft + probRight * entropyRight;
-    return entropyNode - entropySplit;
+    return infoGain;
 }
