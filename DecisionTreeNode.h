@@ -7,6 +7,11 @@ private:
     bool isLeaf;
 
 public:
-    
+    ~DecisionTreeNode();
+    DecisionTreeNode( int nFeature );
+    void insertRightChild( int nFeature );
+    void insertLeftChild( int nFeature );
+    bool hasChildren();
+
 
 };
