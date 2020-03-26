@@ -1,11 +1,110 @@
 #include "DecisionTree.h"
 #include <cmath>
 #include <iostream>
+#include <fstream>
 
 using namespace std; 
 
 DecisionTree::~DecisionTree() {
     delete root;
+}
+
+void DecisionTree::printTree( DecisionTreeNode * root, int level ) {
+    //Prints the tree using preorder traversal
+    //Parent - Left Child - Right Child
+    if ( root == NULL ) {
+        return;
+    }
+
+    //Tabs will be printed out according to the level of the node
+    for ( int i = 0; i < level; i++ ) {
+        cout << "\t";
+    }
+
+    //If the node is leaf, print "class"
+    if ( !root->hasChildren() ) {
+        cout << "class= " << root->getFeature() << endl;
+    }
+
+    else {
+        cout << root->getFeature() << endl;
+    }
+
+    printTree(root->getLeftChild(), level + 1 );
+    printTree(root->getRightChild(), level + 1 );
+
+}
+
+void DecisionTree::print() {
+    printTree( root, 0 );
+}
+
+double DecisionTree::test(const bool** data, const int* labels, const int numSamples) {
+
+    int truePredictions = 0;
+
+    for ( int i = 0; i < numSamples; i++ ) {
+        if ( predict( data[i] ) == labels[i] ) {
+            ++truePredictions;
+        }
+    }
+
+    double testResult = double( truePredictions / numSamples );
+    return testResult;
+}
+
+double DecisionTree::test(const string fileName, const int numSamples) {
+
+    bool ** tempData = new bool*[numSamples];
+    int * tempLabels = new int[numSamples];
+    int featureSize = 0;
+    string line;
+    string lineNumber;
+    ifstream inFile;                            //File as ifstream
+    inFile.open( fileName );
+    streampos fileBeginning = inFile.tellg(); 
+    getline( inFile, lineNumber );
+    inFile.seekg( fileBeginning );
+
+
+
+    for ( int i = 0; i < numSamples; i++ ) {
+        tempData[i] = new bool[featureSize];
+    }
+}
+
+int DecisionTree::predict(const bool* data ) {
+    DecisionTreeNode * nodePtr = root;
+    int feature = 0;
+    while ( root->hasChildren() ) {
+        feature = nodePtr->getFeature();
+        if ( data[feature] == 0 ) {
+            nodePtr = nodePtr->getLeftChild();
+        }
+        else {
+            nodePtr = nodePtr->getRightChild();
+        }
+    }
+
+    return nodePtr->getFeature();
+}
+
+
+void DecisionTree::train(const bool** data, const int* labels, const int numSamples, const int numFeatures) {
+
+    bool featuresTemp[numFeatures] = {false};
+    bool samplesTemp[numSamples] = {true};
+
+    root = new DecisionTreeNode();  //initializing the root
+
+    train( root, data, labels, samplesTemp, featuresTemp, numSamples, numFeatures);
+}
+
+void train(DecisionTreeNode * rootNode, const bool** data,
+               const int* labels, bool* samplesUsed, bool* featuresUsed,
+               const int numSamples, const int numFeatures) {
+
+    
 }
 
 double DecisionTree::calculateEntropy( const int * classCounts, const int numClasses) {

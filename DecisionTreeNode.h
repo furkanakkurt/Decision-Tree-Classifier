@@ -1,8 +1,8 @@
 class DecisionTreeNode {
 
 private:
-    DecisionTreeNode * leftPtr;
-    DecisionTreeNode * rightPtr;
+    DecisionTreeNode * leftChild;
+    DecisionTreeNode * rightChild;
     int feature;
     bool isLeaf;
 
@@ -14,6 +14,7 @@ public:
     void insertLeftChild( int nFeature );
     int getFeature();
     bool hasChildren();
-
+    DecisionTreeNode * getLeftChild();
+    DecisionTreeNode * getRightChild();
 
 };

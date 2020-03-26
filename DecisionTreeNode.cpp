@@ -5,37 +5,37 @@ using namespace std;
 
     DecisionTreeNode::DecisionTreeNode( int nFeature ) {
         feature = nFeature;
-        leftPtr = NULL;
-        rightPtr = NULL;
+        leftChild = NULL;
+        rightChild = NULL;
         isLeaf = true;
     }
 
     DecisionTreeNode::DecisionTreeNode() {
         feature = -1;
-        leftPtr = NULL;
-        rightPtr = NULL;
+        leftChild = NULL;
+        rightChild = NULL;
         isLeaf = true;
     }
 
     DecisionTreeNode::~DecisionTreeNode() {
-        if ( rightPtr ) {
-            delete rightPtr;
+        if ( rightChild ) {
+            delete rightChild;
         }
 
-        if ( leftPtr ) {
-            delete leftPtr;
+        if ( leftChild ) {
+            delete leftChild;
         }
     }
 
     void DecisionTreeNode::insertRightChild( int nFeature ) {
         DecisionTreeNode * right = new DecisionTreeNode(nFeature);
-        rightPtr = right;
+        rightChild = right;
         isLeaf = false;
     }
 
     void DecisionTreeNode::insertLeftChild( int nFeature ) {
-        DecisionTreeNode * left = new DecisionTreeNode(nFeature);
-        leftPtr = left;
+        DecisionTreeNode * left = new DecisionTreeNode( nFeature );
+        leftChild = left;
         isLeaf = false;
     }
     
@@ -44,8 +44,16 @@ using namespace std;
     }
 
     bool DecisionTreeNode::hasChildren() {
-        if ( leftPtr != NULL || rightPtr != NULL ) {
+        if ( leftChild != NULL || rightChild != NULL ) {
             return true;
         } 
         return false;
+    }
+
+    DecisionTreeNode * DecisionTreeNode::getLeftChild() {
+        return leftChild;
+    }
+
+    DecisionTreeNode * DecisionTreeNode::getLeftChild() {
+        return rightChild;
     }
