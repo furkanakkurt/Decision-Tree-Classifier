@@ -10,8 +10,9 @@ public:
     ~DecisionTreeNode();
     DecisionTreeNode();
     DecisionTreeNode( int nFeature );
-    void insertRightChild( int nFeature );
-    void insertLeftChild( int nFeature );
+    void insertRightChild( DecisionTreeNode * dt );
+    void insertLeftChild( DecisionTreeNode * dt );
+    void setFeature( int nFeature );
     int getFeature();
     bool hasChildren();
     DecisionTreeNode * getLeftChild();

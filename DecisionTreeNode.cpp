@@ -27,20 +27,30 @@ using namespace std;
         }
     }
 
-    void DecisionTreeNode::insertRightChild( int nFeature ) {
-        DecisionTreeNode * right = new DecisionTreeNode(nFeature);
-        rightChild = right;
-        isLeaf = false;
+    void DecisionTreeNode::insertRightChild( DecisionTreeNode * nRightChild ) {
+        //cout << "right" << endl;
+        rightChild = nRightChild;
     }
 
-    void DecisionTreeNode::insertLeftChild( int nFeature ) {
-        DecisionTreeNode * left = new DecisionTreeNode( nFeature );
-        leftChild = left;
-        isLeaf = false;
+    void DecisionTreeNode::insertLeftChild( DecisionTreeNode * nLeftChild ) {
+        //cout << "left " << endl;
+        leftChild = nLeftChild;
+    }
+
+    void DecisionTreeNode::setFeature( int nFeature ) {
+        feature = nFeature;
     }
     
     int DecisionTreeNode::getFeature() {
         return feature;
+    }
+
+    DecisionTreeNode * DecisionTreeNode::getLeftChild() {
+        return leftChild;
+    }
+
+    DecisionTreeNode * DecisionTreeNode::getRightChild() {
+        return rightChild;
     }
 
     bool DecisionTreeNode::hasChildren() {
@@ -50,10 +60,3 @@ using namespace std;
         return false;
     }
 
-    DecisionTreeNode * DecisionTreeNode::getLeftChild() {
-        return leftChild;
-    }
-
-    DecisionTreeNode * DecisionTreeNode::getLeftChild() {
-        return rightChild;
-    }
