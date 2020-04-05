@@ -28,12 +28,10 @@ using namespace std;
     }
 
     void DecisionTreeNode::insertRightChild( DecisionTreeNode * nRightChild ) {
-        //cout << "right" << endl;
         rightChild = nRightChild;
     }
 
     void DecisionTreeNode::insertLeftChild( DecisionTreeNode * nLeftChild ) {
-        //cout << "left " << endl;
         leftChild = nLeftChild;
     }
 

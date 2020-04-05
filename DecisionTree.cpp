@@ -14,30 +14,34 @@ DecisionTree::~DecisionTree() {
     delete root;
 }
 
-void DecisionTree::printTree( DecisionTreeNode * root, int level ) {
+
+void DecisionTree::printTree( DecisionTreeNode * rootNode, int level ) {
     //Prints the tree using preorder traversal
-    //Parent - Left Child - Right Child
-    if ( root == NULL ) {
+    //Parent - Left Child - Right Childı
+    if ( rootNode == NULL ) {
         return;
     }
 
+    printTree(rootNode->getRightChild(), level + 1 );
     //Tabs will be printed out according to the level of the node
     for ( int i = 0; i < level; i++ ) {
         cout << "\t";
     }
 
     //If the node is leaf, print "class"
-    if ( !root->hasChildren() ) {
-        cout << "class= " << root->getFeature() << endl;
+    if ( !(rootNode->hasChildren()) ) {
+        cout << "class= " << rootNode->getFeature() << endl;
     }
 
     else {
-        cout << root->getFeature() << endl;
+        cout << rootNode->getFeature() << endl;
     }
 
-    printTree(root->getLeftChild(), level + 1 );
-    printTree(root->getRightChild(), level + 1 );
 
+    printTree(rootNode->getLeftChild(), level + 1 );
+//    cout << "\t" << rootNode->getFeature() << endl;
+//    cout << rootNode->getLeftChild()->getFeature();
+//    cout << "\t\t" << rootNode->getRightChild()->getFeature();
 }
 
 void DecisionTree::print() {
@@ -50,11 +54,14 @@ double DecisionTree::test(const bool** data, const int* labels, const int numSam
 
     for ( int i = 0; i < numSamples; i++ ) {
         //cout << "predict data " << predict( data[i] ) << " labels[i] " << labels[i] << endl;
-        if ( predict( data[i] ) == labels[i] ) {
+        //cout << "predict " << predict(data[i]) << " label " << labels[i] << endl;
+        const bool * tmp = data[i];
+        if ( predict( tmp ) == labels[i] ) {
             ++truePredictions;
         }
     }
 
+    // 471 - 473 
     //cout << endl << "truepredic " << truePredictions << " numsamples " << numSamples << endl; 
     double testResult = double(truePredictions) / numSamples;
     return testResult;
@@ -70,43 +77,45 @@ double DecisionTree::test(const string fileName, const int numSamples) {
     file.open(fileName);
     string lineString;
     int featureSize = 0;
-    
-    getline(file, lineString);
-
-	file.clear();
-	file.seekg(0, ios::beg);
-    //calculating the feature size by the first line 
-
-    featureSize = ( lineString.size() - 1  ) / 2;
+    // getline(file, lineString);
+    // cout << "linefirst: " << lineString << endl;
+	// file.clear();
+	// file.seekg(0, ios::beg);
+    // getline(file,lineString);
+    // cout << "linefirsts: " << lineString << endl;
+    // featureSize = ( lineString.size() - 1  ) / 2;
+            
     for ( int i = 0; i < numSamples; i++ ) {
         tmpData[i] = new bool[featureSize];
     }
 
     int index = 0;
-    while ( !( file.eof() ) ) {
-        getline(file, lineString);
+    while (  index < numSamples && getline(file, lineString) ) {
+        
+        //getline(file, lineString);
+        //cout << "line" << index+1 << " is: " << lineString << endl;
         int j = 0;
-        for ( int i = 0; i < lineString.size(); i += 2 ) {
+        int lineSize = lineString.size();
+        featureSize = ( lineSize - 1 ) / 2; 
+        for ( int i = 0; i < lineSize; i += 2 ) {
             tmpData[index][j] = lineString[i] - '0';
             j++;
         }
-
-        labels[index] = lineString[lineString.size()-2] - '0';
+        labels[index] = lineString[lineSize-2] - '0';
+        //cout << "label: " << labels[index] << endl;
         index++;
+
     }
 
     //cout << "label[0] " << labels[2] << endl;
-
-    file.close();
-    const bool * const * data = tmpData;  
-  
+    file.close();  
     //cout << "labels " << labels[2] << endl;
-    double testResult = test((const bool**)data, labels, numSamples);
+    double testResult = test((const bool**)tmpData, labels, numSamples);
     for ( int i = 0; i < numSamples; i++ ) {
-        delete [] data[i];
+        delete [] tmpData[i];
     }
 
-    delete [] data;
+    delete [] tmpData;
     delete [] labels;
 
     return testResult;
@@ -116,8 +125,9 @@ int DecisionTree::predict(const bool* data ) {
     
     DecisionTreeNode * nodePtr = root;
     //cout << "feature " << nodePtr->getFeature() << endl;
-    while ( nodePtr->getRightChild() != NULL && nodePtr->getLeftChild() != NULL ) {
-        //cout << "node feature " << nodePtr->getFeature() << endl;ü
+    while ( nodePtr->getRightChild() || nodePtr->getLeftChild() ) {
+        //cout << "node feature " << nodePtr->getFeature() << endl;
+        //cout << data[nodePtr->getFeature()] << endl;
         if ( data[nodePtr->getFeature()] == 0 ) {
             nodePtr = nodePtr->getLeftChild();
         }
@@ -133,37 +143,31 @@ int DecisionTree::predict(const bool* data ) {
 
 void DecisionTree::train(const bool** data, const int* labels, const int numSamples, const int numFeatures) {
 
-    bool * featuresTemp = new bool[numFeatures];
-    bool * samplesTemp = new bool[numSamples];
+    bool * samplesUsed = new bool[numSamples];
+    bool * featuresUsed = new bool[numFeatures];
 
     for ( int i = 0; i < numFeatures; i++ ) {
-        featuresTemp[i] = 0;
+        featuresUsed[i] = 0;
     }
 
-    for ( int i = 0; i < numFeatures; i++ ) {
-        samplesTemp[i] = 1;
+    for ( int i = 0; i < numSamples; i++ ) {
+        samplesUsed[i] = 0;
     }
 
-    // for ( int i = numFeatures; i < numSamples; i++ ) {
-    //     samplesTemp[i] = 0;
-    // }
+    root = new DecisionTreeNode();
+    train( root, data, labels, samplesUsed, featuresUsed, numSamples, numFeatures );
 
-    //cout << data[0][19]  << " sasa" << endl;
-    root = new DecisionTreeNode();  //initializing the root
-
-    train( root, data, labels, samplesTemp, featuresTemp, numSamples, numFeatures );
-    
-    delete [] featuresTemp;
-    delete [] samplesTemp;
+    delete [] featuresUsed;
+    delete [] samplesUsed;
 }
 
 
 void DecisionTree::train(const string fileName, const int numSamples, const int numFeatures) {
 
     bool ** tmpData = new bool*[numSamples];
+    //bool tmpData[numSamples][numFeatures];
     int * labels = new int[numSamples];
-
-
+    int cond = 0;
     for ( int i = 0; i < numSamples; i++ ) {
         tmpData[i] = new bool[numFeatures];
     }
@@ -173,171 +177,115 @@ void DecisionTree::train(const string fileName, const int numSamples, const int 
 
     string lineString;
     int index = 0;
-    while ( !( file.eof() ) ) {
-        getline(file, lineString);
+    while ( index < numSamples && getline(file, lineString) ) {
+        //cout << "index: " << index << endl;
+        //getline(file, lineString);
         int j = 0;
-        for ( int i = 0; i < lineString.size(); i += 2 ) {
+        int lineSize = lineString.size();
+        for ( int i = 0; i < lineSize; i += 2 ) {
+            //cout << "linestring[" << i << "]: " << lineString[i] << endl;
             tmpData[index][j] = lineString[i] - '0';
             j++;
         }
-
+        
         //cout << "label " << lineString[lineString.size()-2] << endl;
-        labels[index] = lineString[lineString.size()-2] - '0';
+        labels[index] = lineString[lineSize-2] - '0';
         index++;
     }
 
-    const bool * const * tmp = tmpData; 
+    // for ( int i = 0; i <= numSamples+10; i ++ )
+    //     cout <<"I: " << i << " " << labels[i] << endl;
     // cout << "numfeatures " << numFeatures << endl;
     // cout << "element " << tmpData[0][30] << endl;
     //cout << "zero " << labels[0] << " one " << labels[1] << endl;
     // cout << "printing " << endl;
-    train((const bool**)tmp, labels, numSamples, numFeatures);
-    
+    train((const bool**)tmpData, labels, numSamples, numFeatures);
+
     for ( int i = 0; i < numSamples; i++ ) {
-        //cout << "counter " << i << endl;
-        //delete [] tmpData[i];
+        //cout << "ss" << endl; 
+        delete [] tmpData[i];
     }
     
-    //delete [] tmpData;
-    //delete [] labels;
+    delete [] tmpData;
+    delete [] labels;
 
-    file.close();   
+    file.close(); 
 }
-
 
 void DecisionTree::train(DecisionTreeNode * rootNode, const bool** data,
                const int* labels, bool* samplesUsed, bool* featuresUsed,
-               const int numSamples, const int numFeatures) {
+               const int numSamples, const int numFeatures) { 
     
-	int curLabel = -1;
-    int prevLabel = -1;
-    int pureValue = -1;
-    bool isPure = 1;
-    bool allUsed = 1;
-
-
-    //Checks whether given sample split is pure
-    //for ( int i = 1; i < numSamples && isPure == 1; i++ ) {
-    for ( int i = 0; i < numSamples && isPure; i++ ) { 
-        //cout << "sample " << samplesUsed[numSamples-1] << endl;
-        //cout << endl;   
-        if ( samplesUsed[i] ) {
-            pureValue = labels[i];
-            if ( curLabel != labels[i] ) {
-                if ( curLabel == -1 ) {
-                    curLabel = labels[i];
-                }
-                else {
-                    prevLabel = curLabel;
-                    curLabel = labels[i];
-                    if ( prevLabel != curLabel ) {
-                        isPure = 0;
-                    }
-                }
-            }
-            // else {
-            //     prevLabel = curLabel;
-            //     curLabel = labels[i];
-            // }
+    //DecisionTreeNode * node = rootNode;
+    int * samplesTmp = new int[numSamples];
+    int sampleNumber = 0;
+    double maxGain = 0;
+    int index = -1;
+    for ( int i = 0; i < numFeatures; i++ ) {
+        double currentGain = calculateInformationGain( data, labels, numSamples, numFeatures, samplesUsed, i );
+        //cout << "Current gain " << currentGain << endl;
+        if ( currentGain > maxGain ) {
+            maxGain = currentGain;
+            index = i;  //index where the most gain occurs
         }
-    } 
+    }
+    
+    //cout << "Index " << index << endl;
+    bool * rightLeaf = new bool[numSamples];
+    bool * leftLeaf = new bool[numSamples];
 
-    // cout << "pure " << pureValue << endl;
-    // cout << "cur " << curLabel << endl;
-    // cout << "prev " << prevLabel << endl;
-    if ( prevLabel == -1 ) {
-        isPure = 1;
-        rootNode->setFeature( pureValue );
-        return;
+    bool flag = 1;
+
+    for ( int i = 0; i < numSamples; i++ ) {
+        leftLeaf[i] = samplesUsed[i];
+        rightLeaf[i] = samplesUsed[i];
+        if ( samplesUsed[i] == 0 ) {
+            samplesTmp[sampleNumber] = i;
+            sampleNumber++;
+        }
+    }
+
+    for ( int i = 0; i < sampleNumber - 1; i++ ) {
+        if ( labels[samplesTmp[i]] != labels[samplesTmp[++i]] ) {
+            flag = 0;
+        }
     }
 
     for ( int i = 0; i < numFeatures; i++ ) {
-        if ( !featuresUsed[i] ) {
-            allUsed = 0;
+        if ( index < 0 || flag ) {
+            rootNode->setFeature( labels[samplesTmp[0]] );
+            delete [] leftLeaf;
+            delete [] rightLeaf;   
+            delete [] samplesTmp;
+            return;
         }
     }
 
-
-    if ( allUsed ) {
-        cout << "DEBUGGGGG " << endl;
-        int classCount = 0;
-
-        for ( int i = 0; i < numSamples; i++ ) {
-            if ( samplesUsed[i] ) {
-                if ( classCount < labels[i] ) {
-                    classCount = labels[i];
-                }
-            }
+    for ( int i = 0; i < numSamples; i++ ) {
+        if ( samplesUsed[i] == 0 ) {
+            featuresUsed[index] = 1;
         }
 
-        int * classes = new int[classCount];
-
-        for ( int i = 0; i < classCount; i++ ) {
-            classes[i] = 0;
+        if ( data[i][index] ) {
+            featuresUsed[index] = 1;
+            leftLeaf[i] = 1;
         }
 
-        for ( int i = 0; i < numSamples; i++ ) {
-            if ( samplesUsed[i] ) {
-                int index = labels[i] - 1;
-                ( classes[index] )++;
-            }
+        else {
+            featuresUsed[index] = 1;
+            rightLeaf[i] = 1;
         }
+    } 
 
-        int feature = 0;
-        for ( int i = 0; i < classCount; i++ ) {
-            if ( classes[feature] < classes[i] ) {
-                feature = ++i;
-            }
-        }
+    rootNode->setFeature( index );
+    rootNode->insertLeftChild( new DecisionTreeNode() );
+    rootNode->insertRightChild( new DecisionTreeNode() );
+    train( rootNode->getLeftChild(), data, labels, leftLeaf, featuresUsed, numSamples, numFeatures );
+    train( rootNode->getRightChild(), data, labels, rightLeaf, featuresUsed, numSamples, numFeatures );
 
-        rootNode->setFeature( feature );
-    }
-
-    else {
-        bool * samplesLeft = new bool[numSamples];
-        bool * samplesRight = new bool[numSamples];
-        double gainMost = 0;
-        int featureToSelect = -1;
-
-        for ( int i = 0; i < numFeatures; i++ ) {
-            if ( !featuresUsed[i] ) {
-                double gain = calculateInformationGain(data, labels, numSamples, numFeatures, samplesUsed, i);
-                if ( gainMost < gain ) {
-                    gainMost = gain;
-                    featureToSelect = i;
-                }
-            }
-        }
-
-        featuresUsed[featureToSelect] = 1;
-
-        for ( int i = 0; i < numSamples; i++ ) {
-            if ( samplesUsed[i] ) {
-                if ( !data[i][featureToSelect] ) {
-                    samplesLeft[i] = samplesUsed[i];
-                    samplesRight[i] = 0;
-                }
-                else {
-                    samplesRight[i] = samplesUsed[i];
-                    samplesLeft[i] = 0;
-                }
-            }
-            else {
-                samplesLeft[i] = samplesRight[i] = 0;
-            }
-        }
-
-        rootNode->setFeature( featureToSelect );
-        rootNode->insertLeftChild( new DecisionTreeNode() );
-        rootNode->insertRightChild( new DecisionTreeNode() );
-        
-        train(rootNode->getLeftChild(), data, labels, samplesLeft, featuresUsed, numSamples, numFeatures);
-        //cout << "debugg " << endl;   
-		train(rootNode->getRightChild(), data, labels, samplesRight, featuresUsed, numSamples, numFeatures);
-    
-        delete [] samplesRight;
-        delete [] samplesLeft;
-    }
+    delete [] leftLeaf;
+    delete [] rightLeaf;   
+    delete [] samplesTmp;
 }
 
 
@@ -393,10 +341,15 @@ double DecisionTree::calculateInformationGain(const bool** data, const int* labe
     
     //Array for classes and their counts e.g. {32,0,7}
     //Should be allocated dynamically?
-    cout << "classcount " << classCount << endl;
     int * classes = new int[classCount];
     int * leftClasses = new int[classCount];
     int * rightClasses = new int[classCount];
+
+    for ( int i = 0; i < classCount; i++ ) {
+        classes[i] = 0;
+        leftClasses[i] = 0;
+        rightClasses[i] = 0;
+    }
 
     //In order to determine the number of samples of each class
     for ( int i = 0; i < numSamples; i++ ) {
@@ -426,6 +379,10 @@ double DecisionTree::calculateInformationGain(const bool** data, const int* labe
 
     double entropySplit = probLeft * entropyLeft + probRight * entropyRight;    //H(S)
     double infoGain = entropyNode - entropySplit;                               //H(P) - H(S)
+
+    delete [] classes;
+    delete [] leftClasses;
+    delete [] rightClasses;
 
     return infoGain;
 }
